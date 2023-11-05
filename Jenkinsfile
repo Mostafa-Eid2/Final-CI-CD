@@ -1,6 +1,6 @@
 pipeline {
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_APPLICATION_CREDENTIALS')
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('Mostafa-123')
     }
 
     agent any    
@@ -10,7 +10,7 @@ pipeline {
             steps {
                 // Clone the GitHub repository
                 git branch: 'main',
-                url: 'https://github.com/'
+                url: 'https://github.com/Mostafa-Eid2/Final-CI-CD.git'
             }
         }
 
@@ -35,7 +35,7 @@ pipeline {
                     script {
                         try {
                             echo "Applying Terraform ...."
-                            sh 'terraform apply -auto-approve'
+                            sh 'terraform apply'
                         } catch (Exception e) {
                             currentBuild.result = 'FAILURE'
                             error("Terraform apply failed: ${e.message}")
@@ -47,6 +47,9 @@ pipeline {
     }
 
     post {
+        success{
+            build propagate: false, job: 'GCP-pipeline2'
+        }
         failure {
             script {
                 error("Pipeline failed. Check the logs for details.")

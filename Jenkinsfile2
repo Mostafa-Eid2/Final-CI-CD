@@ -1,17 +1,17 @@
 pipeline {
     environment {
-        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_APPLICATION_CREDENTIALS')
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('Mostafa-123')
     }
 
     agent {
-        label 'gcp'
+        label any
     }    
 
     stages {
         stage('Checkout Code') {
             steps {
                 git branch: 'main',
-                url: 'https://github.com/'
+                url: 'https://github.com/Mostafa-Eid2/Final-CI-CD.git'
             }
         }
 
@@ -19,7 +19,7 @@ pipeline {
             steps {
                 try {
                     sh 'docker build -t flask-app ./App'
-                    sh 'docker tag flask-app gcr.io/[PROJECT_ID]/flask-app:latest'
+                    sh 'docker tag flask-app gcr.io/MostafaEid/flask-app:latest'
                 } catch (Exception e) {
                     currentBuild.result = 'FAILURE'
                     error("Docker image build failed: ${e.message}")
@@ -42,7 +42,7 @@ pipeline {
         stage('Push Docker Image') {
             steps {
                 try {
-                    sh 'docker push gcr.io/[PROJECT_ID]/flask-app:latest'
+                    sh 'docker push gcr.io/MostafaEid/flask-app:latest'
                 } catch (Exception e) {
                     currentBuild.result = 'FAILURE'
                     error("Docker image push failed: ${e.message}")
@@ -53,10 +53,8 @@ pipeline {
         stage('Deploy to Kubernetes') {
             steps {
                 try {
-                    sh 'kubectl delete pods -l app=flask-app'
                     sh 'kubectl apply -f ./Kubernetes/app-deployment.yaml'
                     sh 'kubectl apply -f ./Kubernetes/app-service.yaml'
-                    sh 'kubectl get all'
                 } catch (Exception e) {
                     currentBuild.result = 'FAILURE'
                     error("Kubernetes deployment failed: ${e.message}")
