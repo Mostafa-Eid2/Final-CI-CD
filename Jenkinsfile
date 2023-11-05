@@ -35,7 +35,7 @@ pipeline {
                     script {
                         try {
                             echo "Applying Terraform ...."
-                            sh 'terraform apply'
+                            sh 'terraform apply  -auto-approve'
                         } catch (Exception e) {
                             currentBuild.result = 'FAILURE'
                             error("Terraform apply failed: ${e.message}")
