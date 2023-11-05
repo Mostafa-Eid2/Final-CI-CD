@@ -1,9 +1,10 @@
+
 pipeline {
+    
     environment {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('Mostafa-123')
-        AUTO_APPROVE = "-auto-approve"
     }
-
+    
     agent any    
 
     stages {
@@ -15,46 +16,31 @@ pipeline {
             }
         }
 
-        stage('Initialize Terraform') {
+        stage('initialize Terraform') {
             steps {
                 dir('./Terraform') {
                     script {
-                        try {
-                            sh 'terraform init'
-                        } catch (Exception e) {
-                            currentBuild.result = 'FAILURE'
-                            error("Terraform initialization failed: ${e.message}")
-                        }
+                        sh 'terraform init'
                     }
                 }
             }
         }
-
         stage('Apply Terraform') {
             steps {
                 dir('./Terraform') {
                     script {
-                        try {
-                            echo "Applying Terraform ...."
-                            sh "terraform apply $AUTO_APPROVE"
-                        } catch (Exception e) {
-                            currentBuild.result = 'FAILURE'
-                            error("Terraform apply failed: ${e.message}")
-                        }
+                        echo "Applying Terraform ...."
+                        sh 'terraform apply -auto-approve'
                     }
                 }
             }
         }
+
     }
 
-    post {
-        success {
+    post{
+        success{
             build propagate: false, job: 'GCP-pipeline2'
-        }
-        failure {
-            script {
-                error("Pipeline failed. Check the logs for details.")
-            }
         }
     }
 }
