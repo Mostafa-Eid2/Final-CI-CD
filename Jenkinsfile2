@@ -1,0 +1,75 @@
+pipeline {
+    environment {
+        GOOGLE_APPLICATION_CREDENTIALS = credentials('GOOGLE_APPLICATION_CREDENTIALS')
+    }
+
+    agent {
+        label 'gcp'
+    }    
+
+    stages {
+        stage('Checkout Code') {
+            steps {
+                git branch: 'main',
+                url: 'https://github.com/'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                try {
+                    sh 'docker build -t flask-app ./App'
+                    sh 'docker tag flask-app gcr.io/[PROJECT_ID]/flask-app:latest'
+                } catch (Exception e) {
+                    currentBuild.result = 'FAILURE'
+                    error("Docker image build failed: ${e.message}")
+                }
+            }
+        }
+
+        stage('Configure Docker Registry') {
+            steps {
+                try {
+                    sh 'echo "Y" | gcloud auth configure-docker gcr.io'
+                    sh 'gcloud auth print-access-token | docker login -u oauth2accesstoken --password-stdin gcr.io'
+                } catch (Exception e) {
+                    currentBuild.result = 'FAILURE'
+                    error("Docker registry configuration failed: ${e.message}")
+                }
+            }
+        }
+
+        stage('Push Docker Image') {
+            steps {
+                try {
+                    sh 'docker push gcr.io/[PROJECT_ID]/flask-app:latest'
+                } catch (Exception e) {
+                    currentBuild.result = 'FAILURE'
+                    error("Docker image push failed: ${e.message}")
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                try {
+                    sh 'kubectl delete pods -l app=flask-app'
+                    sh 'kubectl apply -f ./Kubernetes/app-deployment.yaml'
+                    sh 'kubectl apply -f ./Kubernetes/app-service.yaml'
+                    sh 'kubectl get all'
+                } catch (Exception e) {
+                    currentBuild.result = 'FAILURE'
+                    error("Kubernetes deployment failed: ${e.message}")
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            script {
+                error("Pipeline failed. Check the logs for details.")
+            }
+        }
+    }
+}
