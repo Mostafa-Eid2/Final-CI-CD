@@ -1,9 +1,10 @@
 pipeline {
     environment {
         GOOGLE_APPLICATION_CREDENTIALS = credentials('Mostafa-123')
+        AUTO_APPROVE = "-auto-approve"
     }
 
-  agent any    
+    agent any    
 
     stages {
         stage('Checkout Code') {
@@ -35,9 +36,7 @@ pipeline {
                     script {
                         try {
                             echo "Applying Terraform ...."
-                            withCredentials([file(credentialsId: 'gcp-service-account-key', variable: 'GOOGLE_APPLICATION_CREDENTIALS')]) {
-                                sh 'terraform apply -auto-approve'
-                            }
+                            sh "terraform apply $AUTO_APPROVE"
                         } catch (Exception e) {
                             currentBuild.result = 'FAILURE'
                             error("Terraform apply failed: ${e.message}")
