@@ -20,7 +20,7 @@ pipeline {
             steps {
                 dir('./Terraform') {
                     script {
-                        sh 'terraform init'
+                        sh 'terraform init -auto-approve'
                     }
                 }
             }
@@ -30,6 +30,7 @@ pipeline {
                 dir('./Terraform') {
                     script {
                         echo "Applying Terraform ...."
+                        sh 'terraform plan -auto-approve'                        
                         sh 'terraform apply -auto-approve'
                     }
                 }
